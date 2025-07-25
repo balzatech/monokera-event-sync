@@ -1,0 +1,95 @@
+services:
+  postgres_order:
+    image: postgres:13
+    container_name: postgres_order
+    environment:
+      POSTGRES_DB: orders_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432" # Mapeo de puerto externo:interno
+    volumes:
+      - pg_order_data:/var/lib/postgresql/data
+
+  postgres_customer:
+    image: postgres:13
+    container_name: postgres_customer
+    environment:
+      POSTGRES_DB: customers_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5434:5432" # Mapeo de puerto externo:interno
+    volumes:
+      - pg_customer_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"      # conexión de apps
+      - "15672:15672"    # dashboard web
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  order_service:
+    build: ./services/order_service
+    container_name: order_service
+    command: bash -c "bundle install && rails db:prepare && rails s -b 0.0.0.0 -p 3000"
+    volumes:
+      - ./services/order_service:/app
+    ports:
+      - "3001:3000"
+    environment:
+      # Variables de conexión a la base de datos descompuestas:
+      DATABASE_HOST: postgres_order # <-- ¡Importante! Este es el nombre del servicio DB en Docker Compose
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: orders_development
+      DATABASE_PORT: 5432 # <-- ¡Importante! Este es el puerto interno del contenedor PostgreSQL
+      # Otras URLs de servicios:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379/0
+    # Si tienes otras variables NO relacionadas con DB/RabbitMQ/Redis en un .env,
+    # y las necesitas, puedes descomentar la línea de abajo.
+    # Pero si el .env solo contenía la DATABASE_URL, ¡esta línea no es necesaria!
+    # env_file:
+    #   - ./services/order_service/.env
+    depends_on:
+      - postgres_order
+      - rabbitmq
+      - redis
+
+  customer_service:
+    build: ./services/customer_service
+    container_name: customer_service
+    command: bash -c "bundle install && rails db:prepare && rails s -b 0.0.0.0 -p 3000"
+    volumes:
+      - ./services/customer_service:/app
+    ports:
+      - "3002:3000"
+    environment:
+      # Variables de conexión a la base de datos descompuestas para este servicio:
+      DATABASE_HOST: postgres_customer # <-- Nombre del servicio DB para clientes
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: customers_development
+      DATABASE_PORT: 5432
+      # Otras URLs de servicios:
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379/0
+    # Comenta o quita si no es necesario para otras variables:
+    # env_file:
+    #   - ./services/customer_service/.env
+    depends_on:
+      - postgres_customer
+      - rabbitmq
+      - redis
+
+volumes:
+  pg_order_data:
+  pg_customer_data:
