@@ -1,0 +1,74 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+paths:
+  "/customers/{id}":
+    get:
+      summary: Get a customer by ID
+      tags:
+      - Customers
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: customer found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+              example:
+                customer_name: "Juan Perez"
+                address: "Calle 123"
+                orders_count: 2
+        '404':
+          description: customer not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Customer not found"
+  "/customers":
+    get:
+      summary: Get all customers
+      tags:
+      - Customers
+      responses:
+        '200':
+          description: list of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+              example:
+                - customer_name: "Juan Perez"
+                  address: "Calle 123"
+                  orders_count: 2
+                - customer_name: "Maria Gomez"
+                  address: "Avenida 456"
+                  orders_count: 5
+components:
+  schemas:
+    Customer:
+      type: object
+      properties:
+        customer_name:
+          type: string
+        address:
+          type: string
+        orders_count:
+          type: integer
+          nullable: true
+servers:
+- url: http://localhost:3002

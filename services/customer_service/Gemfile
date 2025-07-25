@@ -52,3 +52,5 @@ group :development do
 
 end
 
+
+gem "rswag", "~> 2.16"
