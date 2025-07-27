@@ -8,6 +8,6 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
-Customer.find_or_create_by!(name: 'Juan Perez', address: 'Calle 123', orders_count: 2)
-Customer.find_or_create_by!(name: 'Maria Gomez', address: 'Avenida 456', orders_count: 5)
-Customer.find_or_create_by!(name: 'Carlos Ruiz', address: 'Carrera 789', orders_count: 1)
+Customer.find_or_create_by!(name: 'brayan alzate', address: 'Calle 123', orders_count: 0)
+Customer.find_or_create_by!(name: 'carmen ruiz', address: 'Avenida 456', orders_count: 0)
+Customer.find_or_create_by!(name: 'jhonny alzate', address: 'Carrera 789', orders_count: 0)

@@ -39,7 +39,7 @@ services:
   order_service:
     build: ./services/order_service
     container_name: order_service
-    command: bash -c "bundle install && rails db:prepare && rails s -b 0.0.0.0 -p 3000"
+    command: bash -c "rm -f tmp/pids/server.pid && bundle install && rails db:prepare && rails s -b 0.0.0.0 -p 3000"
     volumes:
       - ./services/order_service:/app
     ports:
@@ -63,33 +63,56 @@ services:
       - postgres_order
       - rabbitmq
       - redis
+    stdin_open: true
+    tty: true
 
-  customer_service:
+
+  # El servidor web de customer_service
+  customer_web:
     build: ./services/customer_service
-    container_name: customer_service
-    command: bash -c "bundle install && rails db:prepare && rails s -b 0.0.0.0 -p 3000"
+    container_name: customer_web
+    command: rails s -b 0.0.0.0 -p 3000
     volumes:
       - ./services/customer_service:/app
     ports:
       - "3002:3000"
     environment:
-      # Variables de conexión a la base de datos descompuestas para este servicio:
-      DATABASE_HOST: postgres_customer # <-- Nombre del servicio DB para clientes
+      DATABASE_HOST: postgres_customer
       DATABASE_USER: postgres
       DATABASE_PASSWORD: password
       DATABASE_NAME: customers_development
       DATABASE_PORT: 5432
-      # Otras URLs de servicios:
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
       REDIS_URL: redis://redis:6379/0
-    # Comenta o quita si no es necesario para otras variables:
-    # env_file:
-    #   - ./services/customer_service/.env
+    depends_on:
+      - postgres_customer
+      - rabbitmq
+      - redis
+    stdin_open: true
+    tty: true
+
+  # El worker de sneakers de customer_service
+  customer_workers:
+    build: ./services/customer_service
+    container_name: customer_workers
+    command: bundle exec sneakers work OrderEventsWorker --require ./config/environment.rb
+    volumes:
+      - ./services/customer_service:/app
+    environment:
+      DATABASE_HOST: postgres_customer
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: password
+      DATABASE_NAME: customers_development
+      DATABASE_PORT: 5432
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       - postgres_customer
       - rabbitmq
       - redis
 
+
 volumes:
   pg_order_data:
   pg_customer_data:
+  
