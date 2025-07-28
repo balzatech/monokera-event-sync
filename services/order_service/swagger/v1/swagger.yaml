@@ -1,0 +1,326 @@
+openapi: 3.0.1
+info:
+  title: Order Service API
+  description: API para gestión de órdenes y sincronización de eventos con el servicio de clientes
+  version: v1.0.0
+  contact:
+    name: Monokera Team
+    email: support@monokera.com
+paths:
+  "/orders":
+    post:
+      summary: Crear una nueva orden
+      description: Crea una nueva orden y publica un evento para sincronizar con el servicio de clientes
+      tags:
+      - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order
+              properties:
+                order:
+                  $ref: '#/components/schemas/OrderInput'
+            example:
+              order:
+                customer_id: 1
+                product_name: "Laptop Gaming"
+                quantity: 2
+                price: 999.99
+                status: "pending"
+      responses:
+        '201':
+          description: Orden creada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order:
+                    $ref: '#/components/schemas/Order'
+                  message:
+                    type: string
+              example:
+                order:
+                  id: 1
+                  customer_id: 1
+                  product_name: "Laptop Gaming"
+                  quantity: 2
+                  price: "999.99"
+                  total_amount: "1999.98"
+                  status: "pending"
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-15T10:30:00Z"
+                message: "Orden creada exitosamente"
+        '422':
+          description: Error de validación o cliente no encontrado
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/CustomerNotFoundError'
+              examples:
+                validation_error:
+                  summary: Error de validación
+                  value:
+                    error: "Validation failed"
+                    errors:
+                      - "Product name can't be blank"
+                      - "Quantity must be greater than 0"
+                      - "Price must be greater than 0"
+                    order:
+                      id: null
+                      customer_id: 1
+                      product_name: ""
+                      quantity: 0
+                      price: -5.0
+                      total_amount: null
+                      status: "pending"
+                customer_not_found:
+                  summary: Cliente no encontrado
+                  value:
+                    error: "Customer not found"
+                    customer_id: 999
+                    message: "El cliente especificado no existe en el sistema"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+    get:
+      summary: Obtener órdenes por cliente
+      description: Retorna todas las órdenes de un cliente específico
+      tags:
+      - Orders
+      parameters:
+      - name: customer_id
+        in: query
+        required: true
+        description: ID del cliente para filtrar órdenes
+        schema:
+          type: integer
+          minimum: 1
+      responses:
+        '200':
+          description: Lista de órdenes obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  count:
+                    type: integer
+                    description: Número total de órdenes
+                  customer_id:
+                    type: string
+                    description: ID del cliente consultado
+              example:
+                orders:
+                  - id: 1
+                    customer_id: 1
+                    product_name: "Laptop Gaming"
+                    quantity: 2
+                    price: "999.99"
+                    total_amount: "1999.98"
+                    status: "pending"
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+                  - id: 2
+                    customer_id: 1
+                    product_name: "Mouse Gaming"
+                    quantity: 1
+                    price: "49.99"
+                    total_amount: "49.99"
+                    status: "processing"
+                    created_at: "2024-01-14T15:45:00Z"
+                    updated_at: "2024-01-14T15:45:00Z"
+                count: 2
+                customer_id: "1"
+        '400':
+          description: Parámetro customer_id faltante
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterError'
+              example:
+                error: "Missing parameter"
+                message: "El parámetro customer_id es requerido"
+  "/up":
+    get:
+      summary: Health Check
+      description: Verifica el estado de salud del servicio
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Servicio funcionando correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID único de la orden
+        customer_id:
+          type: integer
+          description: ID del cliente que realizó la orden
+          minimum: 1
+        product_name:
+          type: string
+          description: Nombre del producto
+          minLength: 1
+          maxLength: 255
+        quantity:
+          type: integer
+          description: Cantidad del producto
+          minimum: 1
+        price:
+          type: string
+          format: decimal
+          description: Precio unitario del producto
+        total_amount:
+          type: string
+          format: decimal
+          description: Monto total de la orden (quantity * price)
+        status:
+          type: string
+          description: Estado actual de la orden
+          enum: ["pending", "processing", "shipped", "delivered", "cancelled"]
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación de la orden
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+      required:
+        - id
+        - customer_id
+        - product_name
+        - quantity
+        - price
+        - total_amount
+        - status
+    OrderInput:
+      type: object
+      properties:
+        customer_id:
+          type: integer
+          description: ID del cliente que realiza la orden
+          minimum: 1
+        product_name:
+          type: string
+          description: Nombre del producto
+          minLength: 1
+          maxLength: 255
+        quantity:
+          type: integer
+          description: Cantidad del producto
+          minimum: 1
+        price:
+          type: number
+          format: decimal
+          description: Precio unitario del producto
+          minimum: 0.01
+        status:
+          type: string
+          description: Estado inicial de la orden
+          enum: ["pending", "processing", "shipped", "delivered", "cancelled"]
+          default: "pending"
+      required:
+        - customer_id
+        - product_name
+        - quantity
+        - price
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje descriptivo del error
+      required:
+        - error
+        - message
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation failed"
+        errors:
+          type: array
+          items:
+            type: string
+          description: Lista de errores de validación
+        order:
+          $ref: '#/components/schemas/Order'
+      required:
+        - error
+        - errors
+    CustomerNotFoundError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Customer not found"
+        customer_id:
+          type: integer
+          description: ID del cliente que no fue encontrado
+        message:
+          type: string
+          description: Mensaje descriptivo del error
+      required:
+        - error
+        - customer_id
+        - message
+    ParameterError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Missing parameter"
+        message:
+          type: string
+          description: Mensaje descriptivo del error de parámetro
+      required:
+        - error
+        - message
+    ServerError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Internal server error"
+        message:
+          type: string
+          description: Mensaje descriptivo del error interno
+      required:
+        - error
+        - message
+servers:
+- url: http://localhost:3001
+  description: Servidor de desarrollo local
+- url: https://order-service.monokera.com
+  description: Servidor de producción

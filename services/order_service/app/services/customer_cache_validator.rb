@@ -3,7 +3,7 @@ require 'httparty'
 
 class CustomerCacheValidator
   include HTTParty
-  base_uri ENV.fetch('CUSTOMER_SERVICE_URL', 'http://customer_service:3000')
+  base_uri ENV.fetch('CUSTOMER_SERVICE_URL', 'http://customer_web:3000')
 
   def initialize(customer_id)
     @customer_id = customer_id
