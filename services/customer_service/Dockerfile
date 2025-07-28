@@ -24,13 +24,7 @@ COPY . .
 # Exponer el puerto de Rails
 EXPOSE 3000
 
-# Copia el script entrypoint y le da permisos de ejecución
-COPY entrypoint.sh /usr/src/app/entrypoint.sh
-RUN chmod +x /usr/src/app/entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# El entrypoint se encargará de las tareas de inicio (ej. migraciones)
-ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
-
-# El CMD es el comando por defecto. Si no se especifica un 'command'
-# en docker-compose.yml, se ejecutará este.
-CMD ["rails", "server", "-b", "0.0.0.0"]
+ENTRYPOINT ["/entrypoint.sh"]

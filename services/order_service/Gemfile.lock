@@ -93,6 +93,9 @@ GEM
     byebug (12.0.0)
     concurrent-ruby (1.3.5)
     connection_pool (2.5.3)
+    crack (1.0.0)
+      bigdecimal
+      rexml
     crass (1.0.6)
     csv (3.3.5)
     date (3.4.1)
@@ -114,6 +117,7 @@ GEM
       i18n (>= 1.8.11, < 2)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    hashdiff (1.2.0)
     httparty (0.23.1)
       csv
       mini_mime (>= 1.0.0)
@@ -229,6 +233,7 @@ GEM
       connection_pool
     reline (0.6.2)
       io-console (~> 0.5)
+    rexml (3.4.1)
     rspec-core (3.13.5)
       rspec-support (~> 3.13.0)
     rspec-expectations (3.13.5)
@@ -280,6 +285,10 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (1.0.3)
+    webmock (3.25.1)
+      addressable (>= 2.8.0)
+      crack (>= 0.3.2)
+      hashdiff (>= 0.4.0, < 2.0.0)
     websocket-driver (0.8.0)
       base64
       websocket-extensions (>= 0.1.0)
@@ -315,6 +324,7 @@ DEPENDENCIES
   simplecov
   tzinfo-data
   uri
+  webmock
 
 RUBY VERSION
    ruby 3.3.8p144
