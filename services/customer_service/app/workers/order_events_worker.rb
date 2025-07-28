@@ -1,7 +1,6 @@
 class OrderEventsWorker
   include Sneakers::Worker
 
-  # Configura el worker para escuchar la cola 'order_events_queue'
   from_queue "order_events_queue",
     durable: true,
     exchange: "events",

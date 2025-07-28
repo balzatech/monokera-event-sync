@@ -1,74 +1,314 @@
 ---
 openapi: 3.0.1
 info:
-  title: API V1
-  version: v1
+  title: Customer Service API
+  description: API para gestión de clientes y sincronización de eventos de órdenes
+  version: v1.0.0
+  contact:
+    name: Monokera Team
+    email: support@monokera.com
 paths:
+  "/customers":
+    get:
+      summary: Obtener todos los clientes
+      description: Retorna una lista de todos los clientes con sus contadores de órdenes
+      tags:
+      - Customers
+      responses:
+        '200':
+          description: Lista de clientes obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+                  count:
+                    type: integer
+                    description: Número total de clientes
+                  total_orders:
+                    type: integer
+                    description: Suma total de órdenes de todos los clientes
+              example:
+                customers:
+                  - id: 1
+                    name: "Juan Pérez"
+                    address: "Calle 123, Ciudad"
+                    orders_count: 2
+                    order_count_display: "2 órdenes"
+                    has_orders: true
+                    created_at: "2024-01-15T10:30:00Z"
+                    updated_at: "2024-01-15T10:30:00Z"
+                  - id: 2
+                    name: "María Gómez"
+                    address: "Avenida 456, Ciudad"
+                    orders_count: 5
+                    order_count_display: "5 órdenes"
+                    has_orders: true
+                    created_at: "2024-01-14T09:15:00Z"
+                    updated_at: "2024-01-14T09:15:00Z"
+                count: 2
+                total_orders: 7
+    post:
+      summary: Crear un nuevo cliente
+      description: Crea un nuevo cliente en el sistema
+      tags:
+      - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customer
+              properties:
+                customer:
+                  $ref: '#/components/schemas/CustomerInput'
+            example:
+              customer:
+                name: "Nuevo Cliente"
+                address: "Dirección del Cliente"
+      responses:
+        '201':
+          description: Cliente creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+                  message:
+                    type: string
+              example:
+                customer:
+                  id: 3
+                  name: "Nuevo Cliente"
+                  address: "Dirección del Cliente"
+                  orders_count: 0
+                  order_count_display: "Sin órdenes"
+                  has_orders: false
+                  created_at: "2024-01-15T11:00:00Z"
+                  updated_at: "2024-01-15T11:00:00Z"
+                message: "Cliente creado exitosamente"
+        '422':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
   "/customers/{id}":
     get:
-      summary: Get a customer by ID
+      summary: Obtener cliente por ID
+      description: Retorna los detalles de un cliente específico
       tags:
       - Customers
       parameters:
       - name: id
         in: path
         required: true
+        description: ID del cliente
         schema:
           type: integer
+          minimum: 1
       responses:
         '200':
-          description: customer found
+          description: Cliente encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Customer'
               example:
-                customer_name: "Juan Perez"
-                address: "Calle 123"
+                id: 1
+                name: "Juan Pérez"
+                address: "Calle 123, Ciudad"
                 orders_count: 2
+                order_count_display: "2 órdenes"
+                has_orders: true
+                created_at: "2024-01-15T10:30:00Z"
+                updated_at: "2024-01-15T10:30:00Z"
         '404':
-          description: customer not found
+          description: Cliente no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "Customer not found"
+                message: "Cliente no encontrado"
+    put:
+      summary: Actualizar cliente
+      description: Actualiza los datos de un cliente existente
+      tags:
+      - Customers
+      parameters:
+      - name: id
+        in: path
+        required: true
+        description: ID del cliente
+        schema:
+          type: integer
+          minimum: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - customer
+              properties:
+                customer:
+                  $ref: '#/components/schemas/CustomerInput'
+            example:
+              customer:
+                name: "Juan Pérez Actualizado"
+                address: "Nueva Dirección 789"
+      responses:
+        '200':
+          description: Cliente actualizado exitosamente
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  error:
+                  customer:
+                    $ref: '#/components/schemas/Customer'
+                  message:
                     type: string
               example:
-                error: "Customer not found"
-  "/customers":
-    get:
-      summary: Get all customers
-      tags:
-      - Customers
-      responses:
-        '200':
-          description: list of customers
+                customer:
+                  id: 1
+                  name: "Juan Pérez Actualizado"
+                  address: "Nueva Dirección 789"
+                  orders_count: 2
+                  order_count_display: "2 órdenes"
+                  has_orders: true
+                  created_at: "2024-01-15T10:30:00Z"
+                  updated_at: "2024-01-15T11:30:00Z"
+                message: "Cliente actualizado exitosamente"
+        '404':
+          description: Cliente no encontrado
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Customer'
-              example:
-                - customer_name: "Juan Perez"
-                  address: "Calle 123"
-                  orders_count: 2
-                - customer_name: "Maria Gomez"
-                  address: "Avenida 456"
-                  orders_count: 5
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  "/up":
+    get:
+      summary: Health Check
+      description: Verifica el estado de salud del servicio
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Servicio funcionando correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
 components:
   schemas:
     Customer:
       type: object
       properties:
-        customer_name:
+        id:
+          type: integer
+          description: ID único del cliente
+        name:
           type: string
+          description: Nombre completo del cliente
+          minLength: 2
+          maxLength: 100
         address:
           type: string
+          description: Dirección del cliente
+          minLength: 5
+          maxLength: 255
         orders_count:
           type: integer
-          nullable: true
+          description: Número total de órdenes del cliente
+          minimum: 0
+        order_count_display:
+          type: string
+          description: Representación legible del contador de órdenes
+          enum: ["Sin órdenes", "1 orden", "2 órdenes", "3 órdenes"]
+        has_orders:
+          type: boolean
+          description: Indica si el cliente tiene órdenes
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha de creación del cliente
+        updated_at:
+          type: string
+          format: date-time
+          description: Fecha de última actualización
+      required:
+        - id
+        - name
+        - address
+        - orders_count
+        - has_orders
+    CustomerInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nombre completo del cliente
+          minLength: 2
+          maxLength: 100
+        address:
+          type: string
+          description: Dirección del cliente
+          minLength: 5
+          maxLength: 255
+      required:
+        - name
+        - address
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Tipo de error
+        message:
+          type: string
+          description: Mensaje descriptivo del error
+      required:
+        - error
+        - message
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation failed"
+        errors:
+          type: array
+          items:
+            type: string
+          description: Lista de errores de validación
+        customer:
+          $ref: '#/components/schemas/Customer'
+      required:
+        - error
+        - errors
 servers:
 - url: http://localhost:3002
+  description: Servidor de desarrollo local
+- url: https://customer-service.monokera.com
+  description: Servidor de producción

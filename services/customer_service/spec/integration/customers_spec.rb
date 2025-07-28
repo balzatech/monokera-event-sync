@@ -8,7 +8,7 @@ RSpec.describe 'Customers API', swagger_doc: 'v1/swagger.yaml' do
       parameter name: :id, in: :path, type: :integer
 
       response '200', 'customer found' do
-        let(:id) { Customer.create!(customer_name: "Julián", address: "Av 123").id }
+        let(:id) { Customer.create!(name: "Julián", address: "Av 123").id }
 
         run_test!
       end
