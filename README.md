@@ -1,4 +1,4 @@
-# Monokera Event Sync
+# Event Sync
 
 Sistema de sincronización de eventos entre microservicios usando RabbitMQ y Redis.
 
